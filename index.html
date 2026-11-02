@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101c30">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stockmaterial">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Stocksport Materialverwaltung PRO V1.5</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0b1220; --panel: #142137; --panel-2: #192c44; --field: #0c1729;
+  --line: #283951; --line-2: #34465e; --text: #e7edf7; --muted: #a4b5cc; --dim: #7f93ad;
+  --accent: #22a4c5; --accent-hover: #62d1e9; --accent-ink: #051725;
+  --k-stock: #62c4f5; --k-stem: #a58af8; --k-plate: #5fd4a3;
+  --ok: #5fd4a3; --warn: #f2c063; --info: #62c4f5; --bad: #ff8a9c; --muted-tone: #8da4bf;
+  --danger: #a73c51; --danger-hover: #c45167;
+  --radius: 16px;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; min-height: 100vh; color: var(--text);
+  font: 15px/1.45 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: radial-gradient(ellipse 85% 45% at 90% -10%, #193d62 0%, transparent 70%), var(--bg);
+}
+h1, h2, h3 { letter-spacing: -.02em; margin: 0; }
+h2 { font-size: 1.15rem; }
+h3 { font-size: .95rem; color: var(--muted); font-weight: 600; margin: 22px 0 10px; text-transform: uppercase; letter-spacing: .04em; }
+.muted { color: var(--muted); }
+.small { font-size: .82rem; }
+
+/* Kopf */
+header {
+  position: sticky; top: 0; z-index: 20; backdrop-filter: blur(16px);
+  background: #101c30ed; border-bottom: 1px solid #263850;
+  padding: 14px clamp(16px, 4vw, 40px); padding-top: max(14px, env(safe-area-inset-top));
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #1d3554; color: var(--accent-hover); }
+.brand h1 { font-size: 1.1rem; }
+.brand span { font-size: .78rem; color: var(--dim); }
+.player-switch { display: flex; align-items: center; gap: 8px; }
+.player-switch label { font-size: .8rem; color: var(--dim); }
+.player-switch select { min-width: 170px; }
+
+main { max-width: 1200px; margin: 22px auto 40px; padding: 0 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px; box-shadow: 0 14px 38px #03081440; margin-bottom: 18px; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+
+/* Navigation */
+nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 6px; margin-bottom: 18px; }
+nav button { background: transparent; color: var(--muted); border: 0; font-weight: 600; padding: 10px 6px; border-radius: 11px; }
+nav button:hover { background: #1f324b; color: var(--text); transform: none; }
+nav button.active { background: var(--accent); color: var(--accent-ink); }
+
+/* Formular-Elemente */
+input, select, textarea, button { font: inherit; }
+input, select, textarea {
+  width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border-radius: 11px;
+  background: var(--field); color: #eef5ff; border: 1px solid var(--line-2);
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid #51b7db; outline-offset: 1px; }
+label, .lbl { display: grid; gap: 5px; font-size: .85rem; font-weight: 600; color: #c5d5e9; }
+.form-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.btn {
+  border: 0; border-radius: 11px; padding: 10px 16px; min-height: 42px; cursor: pointer; font-weight: 600;
+  background: var(--accent); color: var(--accent-ink); transition: background .15s, transform .15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn.secondary { background: #243951; color: #e8f2ff; }
+.btn.secondary:hover { background: #36516e; }
+.btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line-2); padding: 7px 12px; min-height: 36px; font-size: .85rem; }
+.btn.ghost:hover { color: var(--text); background: #1f324b; }
+.btn.danger { background: var(--danger); color: #fff; }
+.btn.danger:hover { background: var(--danger-hover); }
+.btn.ghost.danger { background: transparent; color: var(--bad); border-color: #6b3341; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.seg { display: flex; gap: 3px; padding: 3px; min-height: 44px; border-radius: 11px; background: var(--field); border: 1px solid var(--line-2); }
+.seg button { flex: 1; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-weight: 600; cursor: pointer; }
+.seg button.on { background: #24425f; color: #fff; box-shadow: inset 0 0 0 1px #3f6a8e; }
+
+/* Übersicht */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat {
+  display: flex; flex-direction: column; gap: 4px; text-align: left; cursor: pointer; padding: 20px;
+  border-radius: var(--radius); border: 1px solid #31516b; border-top: 3px solid var(--c);
+  background: linear-gradient(135deg, #1a3651, #172840); color: #dce9f6; transition: transform .15s, background .15s;
+}
+.stat:hover { transform: translateY(-2px); background: #254760; }
+.stat strong { font-size: 2.2rem; line-height: 1.1; color: var(--c); font-variant-numeric: tabular-nums; }
+.stat small { color: var(--dim); font-size: .78rem; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.tile {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 16px; text-align: left; cursor: pointer;
+  background: #1b3049; border: 1px solid #344d68; border-left: 3px solid var(--tc, #344d68); border-radius: 12px; color: #e6f0fc;
+}
+.tile:hover { background: #29465f; }
+.tile strong { font-size: 1.3rem; color: var(--tc, #7cdeef); font-variant-numeric: tabular-nums; }
+.tile.zero { opacity: .55; }
+
+/* Materialliste */
+.toolbar { display: grid; grid-template-columns: auto 180px 180px 1fr auto; gap: 10px; align-items: center; }
+.toggle { display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.toggle input { width: 18px; min-height: 18px; height: 18px; accent-color: var(--accent); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; background: #1d3a57; border: 1px solid #3f6a8e; color: #d6ecff; border-radius: 999px; padding: 4px 6px 4px 12px; font-size: .85rem; font-weight: 600; }
+.chip button { border: 0; background: #2b5276; color: #fff; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; line-height: 1; }
+.list-info { color: var(--dim); font-size: .85rem; margin: 12px 0 10px; }
+.items { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+.item { background: var(--panel-2); border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: 14px; padding: 14px; display: grid; gap: 8px; align-content: start; }
+.item.retired { opacity: .6; }
+.k-stock { --c: var(--k-stock); } .k-stem { --c: var(--k-stem); } .k-plate { --c: var(--k-plate); }
+.item-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.inv { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--c); letter-spacing: .02em; }
+.kind { color: var(--muted); font-size: .85rem; }
+.pill { margin-left: auto; font-size: .75rem; font-weight: 700; border-radius: 999px; padding: 2px 9px; color: var(--tc); background: color-mix(in srgb, var(--tc) 15%, transparent); }
+.pill + .pill { margin-left: 0; }
+.t-ok { --tc: var(--ok); } .t-warn { --tc: var(--warn); } .t-info { --tc: var(--info); } .t-bad { --tc: var(--bad); } .t-muted { --tc: var(--muted-tone); }
+.item-main { font-weight: 600; }
+.item-meta { color: var(--muted); font-size: .85rem; }
+.item-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.empty { border: 1.5px dashed var(--line-2); border-radius: 14px; padding: 26px; text-align: center; color: var(--muted); grid-column: 1 / -1; }
+
+/* Spieler */
+.players { display: grid; gap: 8px; margin-top: 10px; }
+.player-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; }
+.player-row.current { border-color: var(--accent); }
+hr { border: 0; border-top: 1px solid var(--line-2); margin: 22px 0; }
+
+/* Hersteller-Katalog */
+.mfr { background: var(--panel-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-top: 10px; }
+.mfr summary { cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 10px; list-style: none; min-height: 32px; }
+.mfr summary::-webkit-details-marker { display: none; }
+.mfr summary b::before { content: '▸ '; color: var(--dim); }
+.mfr[open] summary b::before { content: '▾ '; }
+.mfr a { color: var(--accent-hover); font-size: .85rem; }
+.mfr[open] > *:not(summary) { margin-top: 12px; }
+.models { display: grid; gap: 6px; }
+.model { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; background: var(--panel); border-radius: 10px; }
+.model div { display: grid; }
+.del { border: 0; background: transparent; color: var(--muted); font-size: 1.3rem; cursor: pointer; width: 34px; height: 34px; border-radius: 8px; flex: none; }
+.del:hover { color: var(--bad); background: #3a1c26; }
+.notice { background: #41351e; color: #f7dfac; border: 1px solid #705b30; border-radius: 12px; padding: 12px 14px; font-size: .9rem; }
+.info { background: #14304a; border: 1px solid #275179; color: #cfe6fb; border-radius: 12px; padding: 12px 14px; font-size: .9rem; }
+input[type=file] { display: none; }
+
+/* Editor-Dialog */
+dialog { width: min(720px, calc(100% - 24px)); max-height: calc(100dvh - 24px); padding: 0; border: 1px solid #42627c; border-radius: 20px; background: var(--panel); color: var(--text); }
+dialog::backdrop { background: #02060dcc; backdrop-filter: blur(3px); }
+dialog form { padding: 22px; display: grid; gap: 14px; }
+.dialog-head { display: flex; justify-content: space-between; align-items: center; }
+.x { border: 0; background: transparent; color: var(--muted); font-size: 1.6rem; cursor: pointer; line-height: 1; }
+
+.toast {
+  position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); transform: translate(-50%, 20px); z-index: 50;
+  max-width: calc(100% - 32px); background: #e7edf7; color: #0b1220; font-weight: 600; font-size: .9rem;
+  padding: 10px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: .25s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.error { background: #ffb3c0; color: #3b0a14; }
+footer { text-align: center; color: var(--dim); font-size: .8rem; padding: 10px 0 30px; }
+
+@media (max-width: 760px) {
+  .toolbar { grid-template-columns: 1fr 1fr; }
+  .toolbar #search { grid-column: 1 / -1; order: 3; }
+  .toolbar .toggle { grid-column: 1 / -1; order: 4; }
+  .toolbar #mfrFilter { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  header { position: static; }
+  .player-switch { width: 100%; }
+  .player-switch select { flex: 1; }
+  main { margin-top: 14px; padding: 0 12px; }
+  .card { padding: 16px; border-radius: 16px; }
+  nav button { font-size: .82rem; padding: 10px 2px; }
+  .stats { gap: 8px; }
+  .stat { padding: 14px 12px; }
+  .stat strong { font-size: 1.7rem; }
+  .tiles { grid-template-columns: 1fr 1fr; }
+  .tile { padding: 12px; font-size: .85rem; }
+  .items { grid-template-columns: 1fr; }
+  dialog form { padding: 16px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v8"/><path d="M9 4h6"/><ellipse cx="12" cy="15" rx="8" ry="3.5"/><path d="M4 15v2c0 1.9 3.6 3.5 8 3.5s8-1.6 8-3.5v-2"/></svg>
+    </div>
+    <div><h1>Stocksport Materialverwaltung PRO</h1><span>V1.5 · Daten bleiben in diesem Browser</span></div>
+  </div>
+  <div class="player-switch" id="playerSwitch" hidden>
+    <label for="playerSelect">Spieler</label>
+    <select id="playerSelect"></select>
+  </div>
+</header>
+
+<main>
+  <p id="storageWarn" class="notice" hidden style="margin:0 0 16px"></p>
+  <!-- Erster Start -->
+  <section id="onboarding" class="card" hidden>
+    <h2>Willkommen</h2>
+    <p class="muted">Lege den ersten Spieler an. Weitere Spieler kannst du später unter „Spieler“ hinzufügen.</p>
+    <form id="onboardForm" class="form-grid">
+      <label>Name <input id="obName" required maxlength="100" placeholder="Vor- und Nachname"></label>
+      <label>Verein <input id="obClub" maxlength="100" placeholder="z. B. EC Musterdorf"></label>
+    </form>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn" id="obCreate">Spieler anlegen</button>
+      <button class="btn secondary" data-restore>Sicherung wiederherstellen</button>
+    </div>
+  </section>
+
+  <div id="app" hidden>
+    <nav>
+      <button data-tab="dashboard">Übersicht</button>
+      <button data-tab="material">Material</button>
+      <button data-tab="catalog">Hersteller</button>
+      <button data-tab="players">Spieler</button>
+      <button data-tab="backup">Import / Export</button>
+    </nav>
+
+    <!-- Übersicht -->
+    <section id="tab-dashboard" class="card tab">
+      <div class="card-head"><h2>Materialübersicht</h2><span class="muted small">ohne ausgemusterte Teile</span></div>
+      <div class="stats">
+        <button class="stat k-stock" data-kindlink="stock"><span>Stockkörper</span><strong id="stat-stock">0</strong><small>anzeigen →</small></button>
+        <button class="stat k-stem" data-kindlink="stem"><span>Stiele</span><strong id="stat-stem">0</strong><small>anzeigen →</small></button>
+        <button class="stat k-plate" data-kindlink="plate"><span>Laufplatten</span><strong id="stat-plate">0</strong><small>anzeigen →</small></button>
+      </div>
+      <h3>Kategorien</h3>
+      <div class="tiles" id="catGrid"></div>
+      <h3>Laufplatten nach Hersteller</h3>
+      <div class="tiles" id="mfrGrid"></div>
+      <h3>Zustand</h3>
+      <div class="tiles" id="stateGrid"></div>
+      <h3>Lagerorte</h3>
+      <div class="tiles" id="locGrid"></div>
+    </section>
+
+    <!-- Material -->
+    <section id="tab-material" class="card tab" hidden>
+      <div class="toolbar">
+        <button class="btn" id="newItem">+ Material</button>
+        <select id="kindFilter" aria-label="Materialart">
+          <option value="">Alle Materialarten</option>
+          <option value="stock">Stockkörper</option>
+          <option value="stem">Stiele</option>
+          <option value="plate">Laufplatten</option>
+        </select>
+        <select id="mfrFilter" aria-label="Plattenhersteller"></select>
+        <input id="search" type="search" placeholder="Suchen: Inv-Nr, Shore, Lagerort …">
+        <label class="toggle"><input type="checkbox" id="showRetired"> Ausgemusterte zeigen</label>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="list-info" id="listInfo"></div>
+      <div class="items" id="itemList"></div>
+    </section>
+
+    <!-- Hersteller-Katalog -->
+    <section id="tab-catalog" class="card tab" hidden>
+      <div class="card-head"><h2>Plattenhersteller</h2><button class="btn secondary" id="resetCatalog">Standardkatalog ergänzen</button></div>
+      <p class="muted">Hersteller und Modelle stehen beim Erfassen von Laufplatten zur Auswahl. Wird ein Modell gewählt, werden Laufplatte, Oberfläche und Spezial abgedreht vorbelegt. Der Katalog gilt für alle Spieler auf diesem Gerät.</p>
+      <div id="catalogList"></div>
+      <hr>
+      <h2>Neuer Hersteller</h2>
+      <div class="form-grid" style="margin-top:14px">
+        <label>Name <input id="nmName" maxlength="60"></label>
+        <label>Website (optional) <input id="nmUrl" type="url" placeholder="https://"></label>
+      </div>
+      <div class="actions" style="margin-top:12px"><button class="btn secondary" id="addMfr">Hersteller anlegen</button></div>
+    </section>
+
+    <!-- Spieler -->
+    <section id="tab-players" class="card tab" hidden>
+      <h2>Aktueller Spieler</h2>
+      <div class="form-grid" style="margin-top:14px">
+        <label>Name <input id="pName" maxlength="100"></label>
+        <label>Verein <input id="pClub" maxlength="100"></label>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn" id="saveProfile">Speichern</button>
+        <button class="btn ghost danger" id="deletePlayer">Spieler löschen</button>
+      </div>
+      <hr>
+      <h2>Alle Spieler auf diesem Gerät</h2>
+      <div class="players" id="playerList"></div>
+      <hr>
+      <h2>Neuer Spieler</h2>
+      <div class="form-grid" style="margin-top:14px">
+        <label>Name <input id="npName" maxlength="100"></label>
+        <label>Verein <input id="npClub" maxlength="100"></label>
+      </div>
+      <div class="actions" style="margin-top:12px"><button class="btn secondary" id="createPlayer">Spieler anlegen</button></div>
+    </section>
+
+    <!-- Import / Export -->
+    <section id="tab-backup" class="card tab" hidden>
+      <h2>Excel / Google Sheets</h2>
+      <p class="muted">Eine Datei je Spieler mit den Blättern Person, Stockkörper, Stiele und Laufplatten. Die Datei kann in Excel oder Google Sheets bearbeitet und wieder importiert werden.</p>
+      <div class="actions">
+        <button class="btn" id="exportXlsx">Excel exportieren (.xlsx)</button>
+        <button class="btn secondary" id="importXlsxBtn">Excel importieren</button>
+        <input type="file" id="xlsxFile" accept=".xlsx,.xls,.ods,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+      </div>
+      <p class="notice small" style="margin-top:12px">Der Excel-Import <b>ersetzt</b> den Bestand des aktuellen Spielers. Die Spalte „ID“ nicht ändern; neue Zeilen ohne ID und ohne Inv-Nr bekommen automatisch eine Nummer.</p>
+      <hr>
+      <h2>Sicherung (JSON)</h2>
+      <p class="muted">Vollständige Sicherung, funktioniert auch ohne Internet. Auch Sicherungen aus V1.2 können wiederhergestellt werden.</p>
+      <div class="actions">
+        <button class="btn" id="exportJsonOne">Aktuellen Spieler sichern</button>
+        <button class="btn secondary" id="exportJsonAll">Alle Spieler sichern</button>
+        <button class="btn secondary" data-restore>Sicherung wiederherstellen</button>
+      </div>
+      <hr>
+      <p class="info">Ablage in OneDrive oder Google Drive: exportierte Datei dort speichern. Auf dem anderen Gerät über „Sicherung wiederherstellen“ bzw. „Excel importieren“ → „Durchsuchen“ → OneDrive/Drive die Datei wählen.</p>
+    </section>
+  </div>
+  <!-- Ohne accept: iOS graut .json-Dateien sonst in der Dateiauswahl aus. -->
+  <input type="file" id="jsonFile">
+</main>
+<footer>Stocksport Materialverwaltung PRO V1.5</footer>
+
+<!-- Material erfassen / bearbeiten -->
+<dialog id="editor">
+  <form id="editorForm" novalidate>
+    <div class="dialog-head"><h2 id="editorTitle">Material erfassen</h2><button type="button" class="x" id="closeEditor" aria-label="Schließen">×</button></div>
+    <div class="form-grid">
+      <label>Materialart
+        <select id="fKind"><option value="stock">Stockkörper</option><option value="stem">Stiel</option><option value="plate">Laufplatte</option></select>
+      </label>
+      <label>Inventar-Nr. <input id="fInv" maxlength="20" autocapitalize="characters"></label>
+      <label data-for="stock">Anzahl <input id="fQty" type="number" min="1" max="1000" inputmode="numeric"></label>
+      <label data-for="new-multi">Anzahl anlegen <input id="fCount" type="number" min="1" max="50" inputmode="numeric" value="1"></label>
+    </div>
+
+    <div class="form-grid" data-for="stock">
+      <div class="lbl">Größe <div class="seg" data-name="size"><button type="button" data-v="L">L</button><button type="button" data-v="M">M</button></div></div>
+    </div>
+
+    <div class="form-grid" data-for="stem">
+      <label>Länge (mm) <input id="fLength" inputmode="decimal"></label>
+      <label>Griffform <input id="fGrip" maxlength="100"></label>
+    </div>
+
+    <div class="form-grid" data-for="plate">
+      <label>Hersteller <select id="fMfr"></select></label>
+      <label id="modelWrap">Modell <select id="fModel"></select></label>
+      <label>Bezeichnung <input id="fDesignation" maxlength="120"></label>
+      <label>Plattentyp <input id="fPlateType" maxlength="100"></label>
+      <label>Type / Shore <input id="fShore" maxlength="100"></label>
+      <label>Durchmesser (mm) <input id="fDiameter" inputmode="decimal"></label>
+      <div class="lbl">Oberfläche <div class="seg" data-name="surface"><button type="button" data-v="Glatt">Glatt</button><button type="button" data-v="Profil">Profil</button></div></div>
+      <div class="lbl">Laufplatte <div class="seg" data-name="season"><button type="button" data-v="Sommer">Sommer</button><button type="button" data-v="Winter">Winter</button></div></div>
+      <div class="lbl">Spezial abgedreht <div class="seg" data-name="special"><button type="button" data-v="Nein">Nein</button><button type="button" data-v="Ja">Ja</button></div></div>
+    </div>
+
+    <div class="form-grid">
+      <label>Zustand <select id="fStatus"></select></label>
+      <label>Lagerort <input id="fLocation" maxlength="60" list="locList" placeholder="z. B. Tasche rot"></label>
+    </div>
+    <datalist id="locList"></datalist>
+    <label>Bemerkung <input id="fNotes" maxlength="250"></label>
+    <p class="muted small" style="margin:0">Fehlende Angaben sind erlaubt – die Position wird dann als „unvollständig“ markiert.</p>
+    <div class="actions"><button class="btn" type="submit">Speichern</button><button class="btn secondary" type="button" id="cancelEditor">Abbrechen</button></div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const STORE = 'stocksport_pro_v13';
+const OLD_STORE = 'stocksport_pro_v1_users';
+const KINDS = {
+  stock: { label: 'Stockkörper', prefix: 'S' },
+  stem:  { label: 'Stiel',       prefix: 'ST' },
+  plate: { label: 'Laufplatte',  prefix: 'P' }
+};
+const STATUS = ['Einsatzbereit', 'Verschlissen', 'Zum Abdrehen', 'Defekt', 'Ausgemustert'];
+const STATUS_TONE = { 'Einsatzbereit': 'ok', 'Verschlissen': 'warn', 'Zum Abdrehen': 'info', 'Defekt': 'bad', 'Ausgemustert': 'muted' };
+const RETIRED = 'Ausgemustert';
+
+let db = { players: {}, current: null };
+let view = { tab: 'dashboard', kind: '', cat: null, search: '', showRetired: false };
+let editing = null;
+let catRegistry = [];
+
+// ---------- Hilfsfunktionen ----------
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtNum = v => String(v).replace('.', ',');
+const safeName = s => String(s || 'Spieler').trim().replace(/[^\wäöüÄÖÜß-]+/g, '_');
+const kindOrder = { stock: 0, stem: 1, plate: 2 };
+const byKindInv = (a, b) => kindOrder[a.kind] - kindOrder[b.kind] || a.inv.localeCompare(b.inv, 'de', { numeric: true });
+
+function toast(text, error = false) {
+  const t = $('toast');
+  t.textContent = text;
+  t.className = 'toast show' + (error ? ' error' : '');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove('show'), error ? 4500 : 2500);
+}
+function download(name, data, type) {
+  const url = URL.createObjectURL(new Blob([data], { type }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ---------- Datenhaltung ----------
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE));
+    if (d && d.players && typeof d.players === 'object') db = d;
+  } catch (e) {}
+  if (!db.catalog && !Object.keys(db.players).length) migrateOld();
+  if (!Array.isArray(db.catalog)) db.catalog = defaultCatalog();
+}
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(db)); return true; }
+  catch (e) { toast('Speichern fehlgeschlagen – Speicher voll oder gesperrt. Bitte Sicherung exportieren.', true); return false; }
+}
+// Übernimmt Spieler aus V1.2 (gleicher Browser, gleiche Adresse); Passwörter entfallen.
+function migrateOld() {
+  let old;
+  try { old = JSON.parse(localStorage.getItem(OLD_STORE) || 'null'); } catch (e) { return; }
+  if (!old || typeof old !== 'object') return;
+  for (const [user, acc] of Object.entries(old)) {
+    const p = newPlayer(acc.name || user, acc.club || '');
+    p.items = convertV1Items(acc.items || []);
+    db.players[p.id] = p;
+    db.current = db.current || p.id;
+  }
+  if (Object.keys(db.players).length && save()) setTimeout(() => toast('Daten aus V1.2 übernommen'), 400);
+}
+const newPlayer = (name, club) => ({ id: uid(), name: String(name).slice(0, 100), club: String(club || '').slice(0, 100), items: [] });
+const player = () => db.players[db.current];
+const items = () => player()?.items || [];
+
+// ---------- Hersteller-Katalog ----------
+// Seiwald-Sortiment laut seiwald-stocksport.at (Sommer-/Winterlaufplatten), Stand 02.11.2026.
+function defaultCatalog() {
+  const m = (name, info, season, surface = '', special = 'Nein') => ({ name, info, season, surface, special });
+  const S = 'Sommer', W = 'Winter';
+  return [
+    { id: 'seiwald', name: 'Seiwald', url: 'https://www.seiwald-stocksport.at/produkt-kategorie/sommerlaufplatten/', products: [
+      m('Mamba Profil', 'Langsame Mass- und Stockplatte', S, 'Profil'),
+      m('Mamba Profil PLUS', 'Langsame Massplatte', S, 'Profil'),
+      m('Mamba Glatt', 'Langsame Mass- und Wapplplatte', S, 'Glatt'),
+      m('Mamba Glatt Spezial tief abgedreht', 'Langsame Mass- und Stockplatte', S, 'Glatt', 'Ja'),
+      m('Rocket II Typ 10', 'Die Schnellste', S),
+      m('Rocket II Profil', 'Sehr schnelle Stockplatte', S, 'Profil'),
+      m('Rocket II Glatt', 'Sehr schnelle Stockplatte', S, 'Glatt'),
+      m('Speedy 10er Profil weiß', 'Die Schnellste', S, 'Profil'),
+      m('Zamba', 'Mass- und Stockplatte', S),
+      m('Samba Profilplatte', 'Mass- und Wapplplatte', S, 'Profil'),
+      m('Modell 1 spezial verschraubt', 'Langsame Mass- und Stockplatte', S),
+      m('Modell 5 verschraubt', 'Schnellere Mass- und Stockplatte', S),
+      m('Modell 6 Profil', 'Mass- und Stockplatte', S, 'Profil'),
+      m('Modell 9 Profil', 'Mass- und Wapplplatte', S, 'Profil'),
+      m('Wunderplatte 2.0°', 'Sehr schnelle Kipp- und Massplatte', W),
+      m('Modell 3', 'Langsame Massplatte', W),
+      m('Modell 4', 'Langsame Kippplatte', W)
+    ] },
+    { id: 'ladler', name: 'Ladler', url: '', products: [] }
+  ];
+}
+const cleanProduct = p => ({
+  name: String(p.name ?? '').trim().slice(0, 80), info: String(p.info ?? '').trim().slice(0, 100),
+  season: p.season === 'Winter' ? 'Winter' : 'Sommer',
+  surface: ['Glatt', 'Profil'].includes(p.surface) ? p.surface : '',
+  special: p.special === 'Ja' ? 'Ja' : 'Nein'
+});
+// Ergänzt fehlende Hersteller/Modelle, ohne Vorhandenes zu überschreiben.
+function mergeCatalog(src) {
+  let added = 0;
+  for (const sm of Array.isArray(src) ? src : []) {
+    const name = String(sm.name ?? '').trim().slice(0, 60);
+    if (!name) continue;
+    let m = mfrByName(name);
+    if (!m) { m = { id: String(sm.id || uid()), name, url: '', products: [] }; if (db.catalog.some(x => x.id === m.id)) m.id = uid(); db.catalog.push(m); added++; }
+    if (!m.url && sm.url) m.url = String(sm.url).trim();
+    for (const p of Array.isArray(sm.products) ? sm.products : []) {
+      const cp = cleanProduct(p);
+      if (cp.name && !m.products.some(x => x.name.toLowerCase() === cp.name.toLowerCase())) { m.products.push(cp); added++; }
+    }
+  }
+  return added;
+}
+const mfrByName = n => db.catalog.find(m => m.name.toLowerCase() === String(n).trim().toLowerCase());
+const mfrById = id => db.catalog.find(m => m.id === id);
+
+// Stiele/Platten mit Anzahl > 1 werden in Einzelteile aufgeteilt.
+function convertV1Items(list) {
+  const out = [];
+  for (const raw of list) {
+    let base;
+    try { base = normalize({ ...raw, id: '', inv: '' }); } catch (e) { continue; }
+    const n = base.kind === 'stock' ? 1 : Math.max(1, Math.min(100, parseInt(raw.qty, 10) || 1));
+    for (let k = 0; k < n; k++) out.push({ ...base, id: uid() });
+  }
+  ensureInv(out);
+  return out;
+}
+
+// Macht aus beliebigen Eingaben (Formular, Excel, Sicherung) eine gültige Position.
+function normalize(raw) {
+  const kind = String(raw.kind || '');
+  if (!KINDS[kind]) throw Error('Unbekannte Materialart');
+  const s = v => String(v ?? '').trim();
+  const num = v => { const x = parseFloat(s(v).replace(',', '.')); return Number.isFinite(x) && x > 0 && x < 10000 ? x : ''; };
+  const pick = (v, allowed, def) => allowed.includes(s(v)) ? s(v) : def;
+  const i = {
+    id: s(raw.id) || uid(), inv: s(raw.inv).toUpperCase().slice(0, 20), kind, qty: 1,
+    status: pick(raw.status, STATUS, 'Einsatzbereit'), location: s(raw.location).slice(0, 60), notes: s(raw.notes).slice(0, 250)
+  };
+  if (kind === 'stock') {
+    const q = parseInt(raw.qty, 10);
+    i.qty = q > 0 && q <= 1000 ? q : 1;
+    i.size = pick(raw.size, ['L', 'M'], 'L');
+  } else if (kind === 'stem') {
+    i.length = num(raw.length);
+    i.grip = s(raw.grip).slice(0, 100);
+  } else {
+    i.manufacturer = s(raw.manufacturer).slice(0, 60);
+    i.designation = s(raw.designation).slice(0, 120);
+    i.plateType = s(raw.plateType).slice(0, 100);
+    i.shore = s(raw.shore).slice(0, 100);
+    i.surface = pick(raw.surface, ['Glatt', 'Profil'], 'Glatt');
+    i.season = pick(raw.season, ['Sommer', 'Winter'], 'Sommer');
+    i.special = pick(raw.special, ['Ja', 'Nein'], 'Nein');
+    i.diameter = num(raw.diameter);
+  }
+  return i;
+}
+function nextInv(kind, list) {
+  const pre = KINDS[kind].prefix, re = new RegExp('^' + pre + '-(\\d+)$');
+  let max = 0;
+  for (const i of list) { const m = re.exec(i.inv || ''); if (m) max = Math.max(max, +m[1]); }
+  return pre + '-' + String(max + 1).padStart(3, '0');
+}
+// Vergibt fehlende oder doppelte Inventarnummern neu.
+function ensureInv(list) {
+  const seen = new Set();
+  for (const i of list) {
+    if (!i.inv || seen.has(i.inv)) i.inv = nextInv(i.kind, list);
+    seen.add(i.inv);
+  }
+}
+function dedupeIds(list) {
+  const ids = new Set();
+  for (const i of list) { if (ids.has(i.id)) i.id = uid(); ids.add(i.id); }
+}
+const incomplete = i => i.kind === 'stem' ? !i.length || !i.grip : i.kind === 'plate' ? !i.designation || !i.plateType || !i.shore : false;
+const qtyOf = i => i.qty || 1;
+
+function details(i) {
+  if (i.kind === 'stock') return `Größe ${i.size} · ${i.qty} Stück`;
+  if (i.kind === 'stem') return `${i.length ? fmtNum(i.length) + ' mm' : 'Länge ?'} · ${i.grip || 'Griffform ?'}`;
+  return [i.manufacturer, i.designation || 'Bezeichnung ?', i.plateType, i.shore && 'Shore ' + i.shore, i.surface, i.season,
+    i.special === 'Ja' && 'abgedreht', i.diameter && 'Ø ' + fmtNum(i.diameter) + ' mm'].filter(Boolean).join(' · ');
+}
+const searchText = i => [i.inv, KINDS[i.kind].label, details(i), i.status, i.location, i.notes].join(' ').toLowerCase();
+
+// ---------- Darstellung ----------
+const CATS = [
+  { label: 'Stockkörper L', kind: 'stock', tone: 'stock', test: i => i.size === 'L' },
+  { label: 'Stockkörper M', kind: 'stock', tone: 'stock', test: i => i.size === 'M' },
+  { label: 'Stiele',        kind: 'stem',  tone: 'stem',  test: () => true },
+  { label: 'Sommerplatten', kind: 'plate', tone: 'plate', test: i => i.season === 'Sommer' },
+  { label: 'Winterplatten', kind: 'plate', tone: 'plate', test: i => i.season === 'Winter' },
+  { label: 'Platten glatt', kind: 'plate', tone: 'plate', test: i => i.surface === 'Glatt' },
+  { label: 'Platten Profil', kind: 'plate', tone: 'plate', test: i => i.surface === 'Profil' }
+];
+const STATE_CATS = [
+  { label: 'Verschlissen',  tone: 'warn',  test: i => i.status === 'Verschlissen' },
+  { label: 'Zum Abdrehen',  tone: 'info',  test: i => i.status === 'Zum Abdrehen' },
+  { label: 'Defekt',        tone: 'bad',   test: i => i.status === 'Defekt' },
+  { label: 'Unvollständig', tone: 'warn',  test: incomplete },
+  { label: 'Ausgemustert',  tone: 'muted', test: i => i.status === RETIRED, retired: true }
+];
+const TONE_COLOR = { stock: 'var(--k-stock)', stem: 'var(--k-stem)', plate: 'var(--k-plate)', ok: 'var(--ok)', warn: 'var(--warn)', info: 'var(--info)', bad: 'var(--bad)', muted: 'var(--muted-tone)' };
+
+const matchesCat = (i, cat) => (!cat.kind || i.kind === cat.kind) && (cat.retired || i.status !== RETIRED) && cat.test(i);
+
+function renderAll() {
+  const has = !!player();
+  $('onboarding').hidden = has;
+  $('app').hidden = !has;
+  $('playerSwitch').hidden = !has;
+  if (!has) return;
+  renderPlayerSelect();
+  renderDashboard();
+  renderList();
+  renderPlayers();
+  renderCatalog();
+  showTab(view.tab);
+}
+function showTab(id) {
+  view.tab = id;
+  document.querySelectorAll('.tab').forEach(t => t.hidden = t.id !== 'tab-' + id);
+  document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+}
+function renderPlayerSelect() {
+  const sel = $('playerSelect');
+  sel.innerHTML = Object.values(db.players).sort((a, b) => a.name.localeCompare(b.name, 'de'))
+    .map(p => `<option value="${esc(p.id)}">${esc(p.name)}${p.club ? ' · ' + esc(p.club) : ''}</option>`).join('');
+  sel.value = db.current;
+}
+function renderDashboard() {
+  const list = items();
+  const active = list.filter(i => i.status !== RETIRED);
+  const sum = arr => arr.reduce((n, i) => n + qtyOf(i), 0);
+  for (const k of Object.keys(KINDS)) $('stat-' + k).textContent = sum(active.filter(i => i.kind === k));
+
+  catRegistry = [];
+  const tile = cat => {
+    const idx = catRegistry.push(cat) - 1;
+    const n = sum(list.filter(i => matchesCat(i, cat)));
+    return `<button class="tile${n ? '' : ' zero'}" style="--tc:${TONE_COLOR[cat.tone] || 'var(--accent)'}" data-cat="${idx}"><span>${esc(cat.label)}</span><strong>${n}</strong></button>`;
+  };
+  $('catGrid').innerHTML = CATS.map(tile).join('');
+  $('mfrGrid').innerHTML = mfrNames(true).map(n => tile({
+    label: n || 'Ohne Hersteller', kind: 'plate', tone: n ? 'plate' : 'muted', test: i => (i.manufacturer || '') === n
+  })).join('');
+  $('stateGrid').innerHTML = STATE_CATS.map(tile).join('');
+  const locs = [...new Set(active.map(i => i.location || ''))]
+    .sort((a, b) => a === '' ? 1 : b === '' ? -1 : a.localeCompare(b, 'de'));
+  $('locGrid').innerHTML = locs.length
+    ? locs.map(l => tile({ label: l || 'Ohne Lagerort', tone: l ? 'info' : 'muted', test: i => (i.location || '') === l })).join('')
+    : '<p class="muted">Noch kein Material erfasst.</p>';
+}
+// Katalog-Hersteller plus in Platten verwendete; optional '' für „Ohne Hersteller“.
+function mfrNames(withNone) {
+  const used = items().filter(i => i.kind === 'plate').map(i => i.manufacturer || '');
+  const names = [...new Set([...db.catalog.map(m => m.name), ...used.filter(Boolean)])].sort((a, b) => a.localeCompare(b, 'de'));
+  return withNone && used.includes('') ? [...names, ''] : names;
+}
+function filtered() {
+  const q = view.search.trim().toLowerCase();
+  const mfr = view.mfr === '__none' ? '' : view.mfr;
+  return items().filter(i =>
+    (!view.kind || i.kind === view.kind) &&
+    (!view.mfr || (i.kind === 'plate' && (i.manufacturer || '') === mfr)) &&
+    (view.cat ? matchesCat(i, view.cat) : (view.showRetired || i.status !== RETIRED)) &&
+    (!q || searchText(i).includes(q))
+  ).sort(byKindInv);
+}
+function card(i) {
+  const retired = i.status === RETIRED;
+  const meta = [i.location && '📍 ' + esc(i.location), i.notes && esc(i.notes)].filter(Boolean).join(' · ');
+  const act = (a, label, cls = 'ghost') => `<button class="btn ${cls}" data-act="${a}" data-id="${esc(i.id)}">${label}</button>`;
+  return `<article class="item k-${i.kind}${retired ? ' retired' : ''}">
+    <div class="item-top"><span class="inv">${esc(i.inv)}</span><span class="kind">${KINDS[i.kind].label}</span>
+      <span class="pill t-${STATUS_TONE[i.status]}">${esc(i.status)}</span>${incomplete(i) ? '<span class="pill t-warn">unvollständig</span>' : ''}</div>
+    <div class="item-main">${esc(details(i))}</div>
+    ${meta ? `<div class="item-meta">${meta}</div>` : ''}
+    <div class="item-actions">${retired
+      ? act('restore', 'Reaktivieren') + act('delete', 'Endgültig löschen', 'ghost danger')
+      : act('edit', 'Bearbeiten') + act('dup', 'Duplizieren') + act('retire', 'Ausmustern')}</div>
+  </article>`;
+}
+function renderList() {
+  $('kindFilter').value = view.kind;
+  $('mfrFilter').innerHTML = '<option value="">Alle Hersteller</option>' +
+    mfrNames(false).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('') + '<option value="__none">Ohne Hersteller</option>';
+  $('mfrFilter').value = view.mfr || '';
+  $('search').value = view.search;
+  $('showRetired').checked = view.showRetired;
+  $('chips').innerHTML = view.cat
+    ? `<span class="chip">Filter: ${esc(view.cat.label)}<button data-act="clearcat" aria-label="Filter entfernen">×</button></span>` : '';
+  const list = filtered();
+  const pieces = list.reduce((n, i) => n + qtyOf(i), 0);
+  $('listInfo').textContent = `${list.length} Position${list.length === 1 ? '' : 'en'} · ${pieces} Stück`;
+  $('itemList').innerHTML = list.length ? list.map(card).join('')
+    : `<div class="empty">${items().length ? 'Keine passenden Positionen.' : 'Noch kein Material erfasst – mit „+ Material“ beginnen.'}</div>`;
+}
+function renderCatalog() {
+  const open = new Set([...document.querySelectorAll('.mfr[open]')].map(d => d.dataset.mfrid));
+  $('catalogList').innerHTML = db.catalog.length ? db.catalog.map(m => {
+    const id = esc(m.id);
+    const models = m.products.length ? m.products.map((p, ix) => `
+      <div class="model"><div><b>${esc(p.name)}</b><span class="muted small">${[p.info, p.season, p.surface, p.special === 'Ja' && 'abgedreht'].filter(Boolean).map(esc).join(' · ')}</span></div>
+      <button class="del" data-delmodel="${id}" data-ix="${ix}" title="Modell entfernen" aria-label="Modell entfernen">×</button></div>`).join('')
+      : '<p class="muted small" style="margin:0">Noch keine Modelle hinterlegt.</p>';
+    return `<details class="mfr" data-mfrid="${id}"${open.has(m.id) ? ' open' : ''}>
+      <summary><span><b>${esc(m.name)}</b> <span class="muted small">${m.products.length} Modelle</span></span>${m.url ? `<a href="${esc(m.url)}" target="_blank" rel="noopener">Website ↗</a>` : '<span class="muted small">kein Link</span>'}</summary>
+      <label>Website <input data-mfrurl="${id}" value="${esc(m.url)}" placeholder="Link wird noch hinzugefügt"></label>
+      <div class="models">${models}</div>
+      <div class="form-grid">
+        <label>Neues Modell <input id="am-name-${id}" maxlength="80"></label>
+        <label>Info <input id="am-info-${id}" maxlength="100" placeholder="z. B. Langsame Massplatte"></label>
+        <label>Laufplatte <select id="am-season-${id}"><option>Sommer</option><option>Winter</option></select></label>
+        <label>Oberfläche <select id="am-surface-${id}"><option value="">–</option><option>Glatt</option><option>Profil</option></select></label>
+      </div>
+      <div class="actions"><button class="btn secondary" data-addmodel="${id}">Modell hinzufügen</button><button class="btn ghost danger" data-delmfr="${id}">Hersteller entfernen</button></div>
+    </details>`;
+  }).join('') : '<div class="empty">Kein Hersteller angelegt.</div>';
+}
+function renderPlayers() {
+  const p = player();
+  $('pName').value = p.name;
+  $('pClub').value = p.club;
+  $('playerList').innerHTML = Object.values(db.players).sort((a, b) => a.name.localeCompare(b.name, 'de')).map(x => `
+    <div class="player-row${x.id === db.current ? ' current' : ''}">
+      <div><b>${esc(x.name)}</b> <span class="muted small">${esc(x.club)} · ${x.items.length} Positionen</span></div>
+      ${x.id === db.current ? '<span class="muted small">aktiv</span>' : `<button class="btn ghost" data-switch="${esc(x.id)}">Wechseln</button>`}
+    </div>`).join('');
+}
+
+// ---------- Editor ----------
+function segVal(name) { return document.querySelector(`.seg[data-name="${name}"]`).dataset.value; }
+function setSeg(name, value) {
+  const seg = document.querySelector(`.seg[data-name="${name}"]`);
+  seg.dataset.value = value;
+  seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === value));
+}
+function updateEditorFields() {
+  const kind = $('fKind').value;
+  document.querySelectorAll('#editorForm [data-for]').forEach(el => {
+    const f = el.dataset.for;
+    el.hidden = f === 'new-multi' ? (!!editing || kind === 'stock') : f !== kind;
+  });
+}
+function fillMfrSelect(current) {
+  const names = db.catalog.map(m => m.name);
+  if (current && !mfrByName(current)) names.push(current);
+  $('fMfr').innerHTML = '<option value="">– ohne Hersteller –</option>' + names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  $('fMfr').value = current;
+}
+// Modell-Auswahl nur, wenn für den Hersteller Modelle hinterlegt sind.
+function fillModelSelect(designation) {
+  const products = mfrByName($('fMfr').value)?.products || [];
+  $('modelWrap').hidden = !products.length;
+  if (!products.length) { $('fModel').innerHTML = ''; return; }
+  const group = season => {
+    const opts = products.map((p, ix) => [p, ix]).filter(([p]) => p.season === season)
+      .map(([p, ix]) => `<option value="${ix}">${esc(p.name)}${p.info ? ' – ' + esc(p.info) : ''}</option>`).join('');
+    return opts ? `<optgroup label="${season}">${opts}</optgroup>` : '';
+  };
+  $('fModel').innerHTML = '<option value="">– Modell wählen –</option>' + group('Sommer') + group('Winter') + '<option value="free">Anderes Modell (frei eingeben)</option>';
+  const ix = products.findIndex(p => p.name === designation);
+  $('fModel').value = ix >= 0 ? String(ix) : designation ? 'free' : '';
+}
+function applyModel() {
+  const v = $('fModel').value;
+  if (v === 'free') { $('fDesignation').focus(); return; }
+  const p = v === '' ? null : mfrByName($('fMfr').value)?.products[+v];
+  if (!p) return;
+  $('fDesignation').value = p.name;
+  setSeg('season', p.season);
+  if (p.surface) setSeg('surface', p.surface);
+  setSeg('special', p.special);
+  if (!$('fPlateType').value.trim()) $('fPlateType').value = p.info;
+}
+function openEditor(id = null, template = null) {
+  editing = id;
+  const i = id ? items().find(x => x.id === id) : template || { kind: view.kind || 'stock' };
+  $('editorTitle').textContent = id ? 'Material bearbeiten' : 'Material erfassen';
+  $('fKind').value = i.kind;
+  $('fKind').disabled = !!id;
+  $('fInv').value = id ? i.inv : nextInv(i.kind, items());
+  $('fQty').value = i.qty || 1;
+  $('fCount').value = 1;
+  $('fLength').value = i.length ? fmtNum(i.length) : '';
+  $('fGrip').value = i.grip || '';
+  $('fDesignation').value = i.designation || '';
+  $('fPlateType').value = i.plateType || '';
+  $('fShore').value = i.shore || '';
+  $('fDiameter').value = i.diameter ? fmtNum(i.diameter) : '';
+  setSeg('size', i.size || 'L');
+  setSeg('surface', i.surface || 'Glatt');
+  setSeg('season', i.season || 'Sommer');
+  setSeg('special', i.special || 'Nein');
+  fillMfrSelect(i.manufacturer || '');
+  fillModelSelect(i.designation || '');
+  $('fStatus').value = i.status && i.status !== RETIRED ? i.status : 'Einsatzbereit';
+  $('fLocation').value = i.location || '';
+  $('fNotes').value = i.notes || '';
+  $('locList').innerHTML = [...new Set(items().map(x => x.location).filter(Boolean))].sort().map(l => `<option value="${esc(l)}">`).join('');
+  updateEditorFields();
+  $('editor').showModal();
+}
+function saveEditor() {
+  const list = items();
+  const raw = {
+    id: editing || '', kind: $('fKind').value, inv: $('fInv').value, qty: $('fQty').value, size: segVal('size'),
+    length: $('fLength').value, grip: $('fGrip').value, manufacturer: $('fMfr').value, designation: $('fDesignation').value, plateType: $('fPlateType').value,
+    shore: $('fShore').value, diameter: $('fDiameter').value, surface: segVal('surface'), season: segVal('season'),
+    special: segVal('special'), status: $('fStatus').value, location: $('fLocation').value, notes: $('fNotes').value
+  };
+  let i;
+  try { i = normalize(raw); } catch (e) { toast(e.message, true); return; }
+  if (!i.inv) i.inv = nextInv(i.kind, list);
+  if (list.some(x => x.id !== editing && x.inv === i.inv)) { toast('Inventar-Nr. ' + i.inv + ' ist bereits vergeben.', true); return; }
+  let created = 1;
+  if (editing) {
+    list[list.findIndex(x => x.id === editing)] = i;
+  } else {
+    list.push(i);
+    if (i.kind !== 'stock') {
+      created = Math.min(50, Math.max(1, parseInt($('fCount').value, 10) || 1));
+      for (let k = 1; k < created; k++) list.push({ ...i, id: uid(), inv: nextInv(i.kind, list) });
+    }
+  }
+  if (!save()) return;
+  $('editor').close();
+  renderAll();
+  toast(editing ? 'Änderung gespeichert' : created > 1 ? created + ' Teile angelegt' : 'Material gespeichert');
+}
+
+// ---------- Excel ----------
+const SHEETS = { stock: 'Stockkörper', stem: 'Stiele', plate: 'Laufplatten' };
+const COMMON = [['Zustand', 'status'], ['Lagerort', 'location'], ['Bemerkung', 'notes'], ['ID', 'id']];
+const XCOLS = {
+  stock: [['Inv-Nr', 'inv'], ['Anzahl', 'qty'], ['Größe', 'size'], ...COMMON],
+  stem:  [['Inv-Nr', 'inv'], ['Länge (mm)', 'length'], ['Griffform', 'grip'], ...COMMON],
+  plate: [['Inv-Nr', 'inv'], ['Hersteller', 'manufacturer'], ['Bezeichnung', 'designation'], ['Plattentyp', 'plateType'], ['Type/Shore', 'shore'],
+          ['Oberfläche', 'surface'], ['Laufplatte', 'season'], ['Spezial abgedreht', 'special'], ['Durchmesser (mm)', 'diameter'], ...COMMON]
+};
+const CATALOG_SHEET = 'Hersteller-Katalog';
+const CATALOG_COLS = ['Hersteller', 'Modell', 'Info', 'Laufplatte', 'Oberfläche', 'Spezial abgedreht', 'Website'];
+function readCatalogSheet(ws) {
+  const src = [];
+  for (const r of XLSX.utils.sheet_to_json(ws, { defval: '' })) {
+    const name = String(r['Hersteller']).trim();
+    if (!name) continue;
+    let m = src.find(x => x.name === name);
+    if (!m) { m = { name, url: String(r['Website']).trim(), products: [] }; src.push(m); }
+    if (String(r['Modell']).trim()) m.products.push({ name: r['Modell'], info: r['Info'], season: String(r['Laufplatte']).trim(),
+      surface: String(r['Oberfläche']).trim(), special: String(r['Spezial abgedreht']).trim() });
+  }
+  return src;
+}
+function needXlsx() {
+  if (window.XLSX) return true;
+  toast('Excel-Funktion braucht beim Öffnen der App Internet. Alternativ JSON-Sicherung nutzen.', true);
+  return false;
+}
+function exportXlsx() {
+  if (!needXlsx()) return;
+  const p = player(), wb = XLSX.utils.book_new();
+  const person = XLSX.utils.aoa_to_sheet([['Feld', 'Wert'], ['Name', p.name], ['Verein', p.club],
+    ['Stand', new Date().toLocaleString('de-DE')], ['Version', 'PRO V1.5']]);
+  person['!cols'] = [{ wch: 12 }, { wch: 32 }];
+  XLSX.utils.book_append_sheet(wb, person, 'Person');
+  for (const [kind, name] of Object.entries(SHEETS)) {
+    const cols = XCOLS[kind];
+    const rows = p.items.filter(i => i.kind === kind).sort(byKindInv).map(i => cols.map(([, k]) => i[k] ?? ''));
+    const ws = XLSX.utils.aoa_to_sheet([cols.map(c => c[0]), ...rows]);
+    ws['!cols'] = cols.map(([h, k]) => ({ wch: k === 'id' ? 38 : k === 'notes' ? 30 : Math.max(11, h.length + 3) }));
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  }
+  const catRows = db.catalog.flatMap(m => m.products.length
+    ? m.products.map(p => [m.name, p.name, p.info, p.season, p.surface, p.special, m.url])
+    : [[m.name, '', '', '', '', '', m.url]]);
+  const cat = XLSX.utils.aoa_to_sheet([CATALOG_COLS, ...catRows]);
+  cat['!cols'] = [{ wch: 14 }, { wch: 34 }, { wch: 34 }, { wch: 11 }, { wch: 11 }, { wch: 17 }, { wch: 40 }];
+  XLSX.utils.book_append_sheet(wb, cat, CATALOG_SHEET);
+  XLSX.writeFile(wb, 'Material_' + safeName(p.name) + '.xlsx');
+  toast('Excel-Datei erstellt');
+}
+async function importXlsx(file) {
+  if (!needXlsx()) return;
+  try {
+    const wb = XLSX.read(await file.arrayBuffer());
+    const list = [];
+    let found = false;
+    for (const [kind, name] of Object.entries(SHEETS)) {
+      const ws = wb.Sheets[name] || (kind === 'plate' && wb.Sheets['Platten']);
+      if (!ws) continue;
+      found = true;
+      for (const row of XLSX.utils.sheet_to_json(ws, { defval: '' })) {
+        const raw = { kind };
+        for (const [h, k] of XCOLS[kind]) raw[k] = row[h];
+        if (XCOLS[kind].every(([, k]) => k === 'id' || String(raw[k] ?? '').trim() === '')) continue;
+        list.push(normalize(raw));
+      }
+    }
+    if (!found) throw Error('Keine Blätter „Stockkörper“, „Stiele“ oder „Laufplatten“ gefunden.');
+    dedupeIds(list);
+    ensureInv(list);
+    const p = player();
+    let name = '', club = '';
+    if (wb.Sheets['Person']) for (const [f, w] of XLSX.utils.sheet_to_json(wb.Sheets['Person'], { header: 1 })) {
+      if (f === 'Name') name = String(w ?? '').trim();
+      if (f === 'Verein') club = String(w ?? '').trim();
+    }
+    if (name && name !== p.name && !confirm(`Die Datei gehört zu „${name}“, aktiv ist „${p.name}“. Trotzdem in „${p.name}“ importieren?`)) return;
+    if (!confirm(`Bestand von „${p.name}“ (${p.items.length} Positionen) durch ${list.length} Positionen aus „${file.name}“ ersetzen?`)) return;
+    p.items = list;
+    if (club) p.club = club;
+    const catAdded = wb.Sheets[CATALOG_SHEET] ? mergeCatalog(readCatalogSheet(wb.Sheets[CATALOG_SHEET])) : 0;
+    if (save()) { renderAll(); toast(list.length + ' Positionen importiert' + (catAdded ? ` · ${catAdded} Katalogeinträge ergänzt` : '')); }
+  } catch (e) { toast('Excel-Import: ' + e.message, true); }
+}
+
+// ---------- JSON-Sicherung ----------
+function exportJson(all) {
+  const players = all ? Object.values(db.players) : [player()];
+  const data = { format: 'stocksport-pro-v13', exportedAt: new Date().toISOString(), players, catalog: db.catalog };
+  const date = new Date().toISOString().slice(0, 10);
+  download(all ? `Sicherung_alle_Spieler_${date}.json` : `Sicherung_${safeName(player().name)}_${date}.json`,
+    JSON.stringify(data, null, 2), 'application/json');
+}
+function cleanItems(list) {
+  const out = [];
+  for (const raw of Array.isArray(list) ? list : []) { try { out.push(normalize(raw)); } catch (e) {} }
+  dedupeIds(out);
+  ensureInv(out);
+  return out;
+}
+async function importJson(file) {
+  try {
+    const obj = JSON.parse(await file.text());
+    let incoming;
+    if (obj.format === 'stocksport-pro-v13' && Array.isArray(obj.players)) {
+      incoming = obj.players.map(p => ({ id: String(p.id || uid()), name: String(p.name || 'Spieler').slice(0, 100), club: String(p.club || '').slice(0, 100), items: cleanItems(p.items) }));
+    } else if (obj.format === 'stocksport-pro-v1' && Array.isArray(obj.items)) {
+      const p = newPlayer(obj.profile?.name || 'Spieler aus V1.2', obj.profile?.club || '');
+      p.items = convertV1Items(obj.items);
+      incoming = [p];
+    } else throw Error('Unbekanntes Sicherungsformat');
+    const replaced = incoming.filter(p => db.players[p.id]).length;
+    const msg = `${incoming.length} Spieler wiederherstellen?` + (replaced ? `\n${replaced} vorhandene(r) Spieler wird ersetzt.` : '');
+    if (!confirm(msg)) return;
+    for (const p of incoming) db.players[p.id] = p;
+    db.current = incoming[0].id;
+    mergeCatalog(obj.catalog);
+    if (save()) { view = { ...view, kind: '', cat: null, search: '' }; renderAll(); toast('Sicherung wiederhergestellt'); }
+  } catch (e) { toast('Wiederherstellen: ' + e.message, true); }
+}
+
+// ---------- Ereignisse ----------
+function createPlayer(name, club) {
+  name = name.trim();
+  if (!name) { toast('Bitte einen Namen eingeben.', true); return false; }
+  const p = newPlayer(name, club.trim());
+  db.players[p.id] = p;
+  db.current = p.id;
+  view = { tab: 'dashboard', kind: '', cat: null, search: '', showRetired: false };
+  if (save()) { renderAll(); toast('Spieler „' + p.name + '“ angelegt'); }
+  return true;
+}
+function findItem(id) { return items().find(i => i.id === id); }
+
+document.addEventListener('click', e => {
+  const t = e.target;
+  const tabBtn = t.closest('[data-tab]');
+  if (tabBtn) { showTab(tabBtn.dataset.tab); return; }
+
+  const kindLink = t.closest('[data-kindlink]');
+  if (kindLink) { view.kind = kindLink.dataset.kindlink; view.cat = null; view.mfr = ''; view.search = ''; renderList(); showTab('material'); return; }
+
+  const catBtn = t.closest('[data-cat]');
+  if (catBtn) {
+    const cat = catRegistry[+catBtn.dataset.cat];
+    view.cat = cat; view.kind = cat.kind || ''; view.mfr = ''; view.search = '';
+    renderList(); showTab('material'); return;
+  }
+
+  const segBtn = t.closest('.seg button');
+  if (segBtn) { setSeg(segBtn.parentElement.dataset.name, segBtn.dataset.v); return; }
+
+  const sw = t.closest('[data-switch]');
+  if (sw) { db.current = sw.dataset.switch; view.cat = null; save(); renderAll(); toast('Spieler gewechselt'); return; }
+
+  if (t.closest('[data-restore]')) { $('jsonFile').click(); return; }
+
+  const addModel = t.closest('[data-addmodel]');
+  if (addModel) {
+    const m = mfrById(addModel.dataset.addmodel), id = m.id;
+    const p = cleanProduct({ name: $('am-name-' + id).value, info: $('am-info-' + id).value,
+      season: $('am-season-' + id).value, surface: $('am-surface-' + id).value });
+    if (!p.name) { toast('Bitte einen Modellnamen eingeben.', true); return; }
+    if (m.products.some(x => x.name.toLowerCase() === p.name.toLowerCase())) { toast('Modell gibt es bei ' + m.name + ' bereits.', true); return; }
+    m.products.push(p);
+    if (save()) { renderCatalog(); toast(p.name + ' hinzugefügt'); }
+    return;
+  }
+  const delModel = t.closest('[data-delmodel]');
+  if (delModel) {
+    const m = mfrById(delModel.dataset.delmodel);
+    m.products.splice(+delModel.dataset.ix, 1);
+    if (save()) renderCatalog();
+    return;
+  }
+  const delMfr = t.closest('[data-delmfr]');
+  if (delMfr) {
+    const m = mfrById(delMfr.dataset.delmfr);
+    if (!confirm(`Hersteller „${m.name}“ mit ${m.products.length} Modellen aus dem Katalog entfernen?\nBereits erfasste Platten behalten den Herstellernamen.`)) return;
+    db.catalog = db.catalog.filter(x => x !== m);
+    if (save()) { renderAll(); toast(m.name + ' entfernt'); }
+    return;
+  }
+
+  const a = t.closest('[data-act]');
+  if (!a) return;
+  if (a.dataset.act === 'clearcat') { view.cat = null; renderList(); return; }
+  const item = findItem(a.dataset.id);
+  if (!item) return;
+  switch (a.dataset.act) {
+    case 'edit': openEditor(item.id); break;
+    case 'dup': openEditor(null, { ...item, status: 'Einsatzbereit' }); break;
+    case 'retire': item.status = RETIRED; if (save()) { renderAll(); toast(item.inv + ' ausgemustert'); } break;
+    case 'restore': item.status = 'Einsatzbereit'; if (save()) { renderAll(); toast(item.inv + ' reaktiviert'); } break;
+    case 'delete':
+      if (confirm(`${item.inv} endgültig löschen? Das kann nicht rückgängig gemacht werden.`)) {
+        player().items = items().filter(i => i.id !== item.id);
+        if (save()) { renderAll(); toast(item.inv + ' gelöscht'); }
+      }
+      break;
+  }
+});
+
+$('playerSelect').onchange = e => { db.current = e.target.value; view.cat = null; save(); renderAll(); };
+$('obCreate').onclick = () => createPlayer($('obName').value, $('obClub').value);
+$('onboardForm').onsubmit = e => { e.preventDefault(); createPlayer($('obName').value, $('obClub').value); };
+$('createPlayer').onclick = () => { if (createPlayer($('npName').value, $('npClub').value)) { $('npName').value = ''; $('npClub').value = ''; } };
+$('saveProfile').onclick = () => {
+  const name = $('pName').value.trim();
+  if (!name) { toast('Name darf nicht leer sein.', true); return; }
+  player().name = name.slice(0, 100);
+  player().club = $('pClub').value.trim().slice(0, 100);
+  if (save()) { renderAll(); toast('Profil gespeichert'); }
+};
+$('deletePlayer').onclick = () => {
+  const p = player();
+  if (!confirm(`Spieler „${p.name}“ mit ${p.items.length} Positionen endgültig löschen?\nVorher ggf. eine Sicherung exportieren.`)) return;
+  delete db.players[p.id];
+  db.current = Object.keys(db.players)[0] || null;
+  view = { tab: 'dashboard', kind: '', cat: null, search: '', showRetired: false };
+  if (save()) { renderAll(); toast('Spieler gelöscht'); }
+};
+
+document.addEventListener('change', e => {
+  const u = e.target.closest('[data-mfrurl]');
+  if (!u) return;
+  const url = u.value.trim();
+  if (url && !/^https?:\/\//i.test(url)) { toast('Link muss mit https:// beginnen.', true); return; }
+  mfrById(u.dataset.mfrurl).url = url;
+  if (save()) { renderCatalog(); toast('Link gespeichert'); }
+});
+$('addMfr').onclick = () => {
+  const name = $('nmName').value.trim().slice(0, 60), url = $('nmUrl').value.trim();
+  if (!name) { toast('Bitte einen Herstellernamen eingeben.', true); return; }
+  if (mfrByName(name)) { toast(name + ' ist bereits angelegt.', true); return; }
+  if (url && !/^https?:\/\//i.test(url)) { toast('Link muss mit https:// beginnen.', true); return; }
+  const m = { id: uid(), name, url, products: [] };
+  db.catalog.push(m);
+  if (save()) {
+    $('nmName').value = ''; $('nmUrl').value = '';
+    renderAll();
+    document.querySelector(`.mfr[data-mfrid="${m.id}"]`)?.setAttribute('open', '');
+    toast(name + ' angelegt – jetzt Modelle hinzufügen');
+  }
+};
+$('resetCatalog').onclick = () => {
+  const n = mergeCatalog(defaultCatalog());
+  if (save()) { renderAll(); toast(n ? n + ' Einträge ergänzt' : 'Standardkatalog ist vollständig'); }
+};
+$('fMfr').onchange = () => fillModelSelect($('fDesignation').value.trim());
+$('fModel').onchange = applyModel;
+$('mfrFilter').onchange = e => { view.mfr = e.target.value; renderList(); };
+
+$('newItem').onclick = () => openEditor();
+$('kindFilter').onchange = e => { view.kind = e.target.value; view.cat = null; renderList(); };
+$('search').oninput = e => { view.search = e.target.value; renderList(); };
+$('showRetired').onchange = e => { view.showRetired = e.target.checked; renderList(); };
+
+$('fKind').onchange = () => { if (!editing) $('fInv').value = nextInv($('fKind').value, items()); updateEditorFields(); };
+$('editorForm').onsubmit = e => { e.preventDefault(); saveEditor(); };
+$('closeEditor').onclick = $('cancelEditor').onclick = () => $('editor').close();
+$('fStatus').innerHTML = STATUS.filter(s => s !== RETIRED).map(s => `<option>${s}</option>`).join('');
+
+$('exportXlsx').onclick = exportXlsx;
+$('importXlsxBtn').onclick = () => $('xlsxFile').click();
+$('xlsxFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importXlsx(f); };
+$('exportJsonOne').onclick = () => exportJson(false);
+$('exportJsonAll').onclick = () => exportJson(true);
+$('jsonFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) importJson(f); };
+
+// Warnt, wenn die Umgebung (z. B. Vorschau in OneDrive/Dateien-App) nichts dauerhaft speichert.
+function checkStorage() {
+  let ok = false;
+  try { localStorage.setItem('__test', '1'); ok = localStorage.getItem('__test') === '1'; localStorage.removeItem('__test'); } catch (e) {}
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  let msg = '';
+  if (!ok) msg = 'Achtung: In dieser Ansicht kann die App keine Daten speichern. Eingaben und wiederhergestellte Sicherungen gehen beim Schließen verloren. Bitte die App direkt in Safari oder Chrome öffnen.';
+  else if (ios && location.protocol === 'file:') msg = 'Hinweis: Auf iPhone/iPad ist eine lokal geöffnete Datei nicht zuverlässig. Daten können beim Schließen verloren gehen – nach jeder Änderung sichern.';
+  else if (ios && !standalone) msg = 'Tipp: In Safari auf „Teilen“ → „Zum Home-Bildschirm“ tippen und die App nur noch über das Symbol öffnen. Dort bleiben die Daten dauerhaft gespeichert und die App läuft auch ohne Internet. Achtung: Die Home-Bildschirm-App hat einen eigenen Speicher – Sicherung dort wiederherstellen.';
+  $('storageWarn').textContent = msg;
+  $('storageWarn').hidden = !msg;
+}
+
+load();
+if (db.current && !db.players[db.current]) db.current = Object.keys(db.players)[0] || null;
+checkStorage();
+renderAll();
+
+// Web-App: offline nutzbar machen und dauerhaften Speicher anfordern (nur über https/localhost).
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
+</script>
+</body>
+</html>

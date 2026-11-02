@@ -1,0 +1,84 @@
+STOCKSPORT MATERIALVERWALTUNG PRO V1.5 – INSTALLATION
+=====================================================
+
+START
+- Empfohlen (PC, iPhone, iPad, Android): App über GitHub Pages bereitstellen und die Adresse
+  im Browser öffnen -> siehe Anleitung_GitHub_iPhone.txt. Auf dem Handy „Zum Home-Bildschirm“.
+- Nur am PC auch ohne GitHub: index.html doppelklicken.
+- Beim ersten Start einen Spieler anlegen (Name, Verein). Kein Passwort.
+- Unter „Material“ Stockkörper, Stiele und Laufplatten erfassen.
+
+Offline: Über GitHub geöffnet läuft die App nach dem ersten Start auch ohne Internet, inkl. Excel.
+Per Doppelklick geöffnet braucht Excel-Import/-Export Internet; die JSON-Sicherung geht immer.
+
+IPHONE / IPAD
+- NICHT über die OneDrive-App oder Dateien-App öffnen: Das ist nur eine VORSCHAU, dort wird
+  nichts dauerhaft gespeichert (die App zeigt dann einen gelben Hinweis).
+- Richtig: GitHub-Adresse in Safari öffnen -> „Teilen“ -> „Zum Home-Bildschirm“ und die App
+  nur noch über dieses Symbol öffnen. Die Home-Bildschirm-App hat einen eigenen Speicher.
+- Sicherung wiederherstellen: „Sicherung wiederherstellen“ -> „Durchsuchen“ -> OneDrive -> JSON-Datei.
+  Dafür muss OneDrive in der Dateien-App aktiviert sein (Dateien -> Durchsuchen -> … -> Bearbeiten).
+
+SPIELER
+- Mehrere Spieler pro Gerät möglich, Umschalten oben rechts.
+- Neue Spieler, Umbenennen und Löschen unter „Spieler“.
+
+MATERIAL
+- Jedes Teil hat eine Inventar-Nr.: S-001 (Stockkörper), ST-001 (Stiel), P-001 (Laufplatte).
+  Wird automatisch vorgeschlagen, kann geändert werden (z. B. passend zum Aufkleber).
+- Stiele und Platten werden einzeln geführt. „Anzahl anlegen“ erzeugt mehrere gleiche Teile
+  mit fortlaufenden Nummern. Stockkörper werden mit Anzahl geführt.
+- Zustand: Einsatzbereit, Verschlissen, Zum Abdrehen, Defekt, Ausgemustert.
+- Lagerort: frei wählbar (z. B. Tasche rot, Auto, Vereinsheim); bereits verwendete Orte werden vorgeschlagen.
+- Fehlende Angaben sind erlaubt; die Position wird als „unvollständig“ markiert.
+- „Ausmustern“ statt Löschen. Ausgemusterte Teile erscheinen mit „Ausgemusterte zeigen“
+  und können reaktiviert oder endgültig gelöscht werden.
+- Übersicht: Klick auf eine Kachel öffnet die gefilterte Liste. Der aktive Filter wird angezeigt
+  und lässt sich mit × entfernen.
+
+PLATTENHERSTELLER (ab V1.4)
+- Reiter „Hersteller“: Katalog mit Herstellern und Modellen, gilt für alle Spieler auf dem Gerät.
+- Vorbelegt: Seiwald mit 14 Sommer- und 3 Winterlaufplatten (laut seiwald-stocksport.at, Stand 02.11.2026)
+  und Ladler (noch ohne Modelle, Link kann im Katalog eingetragen werden).
+- Eigene Hersteller und Modelle anlegen, Modelle entfernen, Website-Link pflegen.
+- Beim Erfassen einer Laufplatte: Hersteller wählen -> Modell aus der Liste wählen.
+  Bezeichnung, Laufplatte (Sommer/Winter), Oberfläche, Spezial abgedreht und – falls leer –
+  Plattentyp werden vorbelegt. „Anderes Modell“ erlaubt freie Eingabe.
+- Materialliste: Filter „Hersteller“; Übersicht: Kacheln „Laufplatten nach Hersteller“.
+- „Standardkatalog ergänzen“ fügt fehlende Seiwald-Modelle wieder hinzu (eigene bleiben erhalten).
+
+EXCEL / GOOGLE SHEETS
+- „Excel exportieren“ erstellt Material_<Name>.xlsx mit den Blättern
+  Person, Stockkörper, Stiele, Laufplatten, Hersteller-Katalog (deutsche Spaltennamen).
+- Im Blatt „Hersteller-Katalog“ können z. B. Ladler-Modelle in Excel ergänzt werden;
+  beim Import werden neue Hersteller/Modelle in den Katalog übernommen.
+- Datei kann in Excel oder Google Sheets bearbeitet werden.
+  Spalte „ID“ nicht ändern. Neue Zeilen: ID leer lassen.
+- „Excel importieren“ ERSETZT den Bestand des aktuellen Spielers (es entstehen keine Doppelungen).
+
+GOOGLE DRIVE
+- Exportierte Excel- oder JSON-Datei in den Drive-Ordner hochladen.
+- Auf dem anderen Gerät aus Drive laden und importieren bzw. wiederherstellen.
+
+SICHERUNG (JSON)
+- „Aktuellen Spieler sichern“ oder „Alle Spieler sichern“.
+- „Sicherung wiederherstellen“ liest Sicherungen aus V1.3 und V1.2.
+
+UMSTIEG VON V1.2
+- Wurde V1.2 im selben Browser unter http://localhost:8765 genutzt und V1.3 dort geöffnet,
+  werden die Daten beim ersten Start automatisch übernommen.
+- Sonst: in V1.2 „JSON-Sicherung exportieren“, in V1.3 „Sicherung wiederherstellen“.
+- Stiele/Platten mit Anzahl > 1 werden dabei in Einzelteile mit eigener Inventar-Nr. aufgeteilt.
+- Zustand wird auf „Einsatzbereit“ gesetzt, Lagerort ist leer – bitte nachtragen.
+
+DATENSCHUTZ
+- Daten liegen nur im Browser des jeweiligen Geräts (localStorage). Keine Cloud-Synchronisierung.
+- Browserdaten löschen oder privates Fenster kann Datenverlust verursachen.
+  Regelmäßig sichern.
+
+V1.5: Web-App für GitHub Pages: auf iPhone/Android „Zum Home-Bildschirm“, offline nutzbar
+      (inkl. Excel), dauerhafter Speicher, Hinweise bei Vorschau-Ansicht, JSON-Auswahl auf iOS behoben.
+V1.4: Plattenhersteller-Katalog (Seiwald vorbelegt, Ladler vorbereitet), Modellauswahl beim Erfassen,
+      Herstellerfilter und -übersicht, Katalog in Excel und JSON-Sicherung.
+V1.3: Spielerauswahl statt Anmeldung, echte .xlsx-Dateien, Inventar-Nr., Zustand, Lagerort,
+      Ausmustern statt Löschen, sichtbarer Filter, Kartenansicht für Smartphone, CSS bereinigt.
