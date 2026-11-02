@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Stocksport Materialverwaltung PRO V1.5</title>
+<title>Stocksport Materialverwaltung PRO V1.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
@@ -192,6 +192,36 @@ footer { text-align: center; color: var(--dim); font-size: .8rem; padding: 10px 
   .items { grid-template-columns: 1fr; }
   dialog form { padding: 16px; }
 }
+
+/* Inventurliste: nur im Druck / PDF sichtbar */
+#printArea { display: none; }
+@media print {
+  @page { size: A4; margin: 12mm 11mm; }
+  :root { color-scheme: light; }
+  html.inv-print body { background: #fff; color: #000; }
+  html.inv-print body > :not(#printArea) { display: none !important; }
+  html.inv-print #printArea { display: block; }
+}
+#printArea { font: 9pt/1.35 Arial, Helvetica, sans-serif; color: #000; }
+#printArea h1 { font-size: 16pt; letter-spacing: 0; }
+#printArea h2 { font-size: 11pt; margin: 6mm 0 2mm; letter-spacing: 0; break-after: avoid; }
+#printArea h2 small { font-weight: normal; color: #444; }
+#printArea .ph { display: flex; justify-content: space-between; align-items: flex-end; gap: 8mm; border-bottom: 1.5pt solid #000; padding-bottom: 3mm; }
+#printArea .ph-date { text-align: right; white-space: nowrap; }
+#printArea .meta { display: grid; grid-template-columns: auto 1fr; gap: 1mm 5mm; margin-top: 3mm; font-size: 10.5pt; }
+#printArea .meta b { font-weight: bold; }
+#printArea .summary { margin-top: 4mm; padding: 2mm 3mm; border: .5pt solid #888; background: #eef2f6; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+#printArea table { width: 100%; border-collapse: collapse; }
+#printArea th, #printArea td { border: .5pt solid #888; padding: 1mm 1.4mm; text-align: left; vertical-align: top; }
+#printArea th { background: #e3e9f0; font-size: 8pt; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+#printArea thead { display: table-header-group; }
+#printArea tr { break-inside: avoid; }
+#printArea td:first-child { white-space: nowrap; font-weight: bold; }
+#printArea .chk { width: 8mm; text-align: center; }
+#printArea .num { text-align: right; white-space: nowrap; }
+#printArea .sign { display: grid; grid-template-columns: 1fr 1fr; gap: 14mm; margin-top: 16mm; break-inside: avoid; }
+#printArea .sign div { border-top: .5pt solid #000; padding-top: 1mm; font-size: 8pt; }
+#printArea .foot { margin-top: 6mm; font-size: 7.5pt; color: #555; }
 </style>
 </head>
 <body>
@@ -200,7 +230,7 @@ footer { text-align: center; color: var(--dim); font-size: .8rem; padding: 10px 
     <div class="logo" aria-hidden="true">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v8"/><path d="M9 4h6"/><ellipse cx="12" cy="15" rx="8" ry="3.5"/><path d="M4 15v2c0 1.9 3.6 3.5 8 3.5s8-1.6 8-3.5v-2"/></svg>
     </div>
-    <div><h1>Stocksport Materialverwaltung PRO</h1><span>V1.5 · Daten bleiben in diesem Browser</span></div>
+    <div><h1>Stocksport Materialverwaltung PRO</h1><span>V1.6 · Daten bleiben in diesem Browser</span></div>
   </div>
   <div class="player-switch" id="playerSwitch" hidden>
     <label for="playerSelect">Spieler</label>
@@ -235,7 +265,7 @@ footer { text-align: center; color: var(--dim); font-size: .8rem; padding: 10px 
 
     <!-- Übersicht -->
     <section id="tab-dashboard" class="card tab">
-      <div class="card-head"><h2>Materialübersicht</h2><span class="muted small">ohne ausgemusterte Teile</span></div>
+      <div class="card-head"><div><h2>Materialübersicht</h2><span class="muted small">ohne ausgemusterte Teile</span></div><button class="btn ghost" data-print>Inventurliste (PDF)</button></div>
       <div class="stats">
         <button class="stat k-stock" data-kindlink="stock"><span>Stockkörper</span><strong id="stat-stock">0</strong><small>anzeigen →</small></button>
         <button class="stat k-stem" data-kindlink="stem"><span>Stiele</span><strong id="stat-stem">0</strong><small>anzeigen →</small></button>
@@ -309,6 +339,13 @@ footer { text-align: center; color: var(--dim); font-size: .8rem; padding: 10px 
 
     <!-- Import / Export -->
     <section id="tab-backup" class="card tab" hidden>
+      <h2>Inventurliste (PDF)</h2>
+      <p class="muted">Liste des aktuellen Spielers mit Name, Verein, Datum, Stockkörpern, Stielen und Laufplatten – mit Abhakspalte und Unterschriftsfeld. Im Druckdialog „Als PDF speichern“ wählen. iPhone/iPad: im Druckdialog auf „Teilen“ tippen → „In Dateien sichern“ (z. B. OneDrive).</p>
+      <div class="actions">
+        <button class="btn" data-print>Inventurliste drucken / PDF</button>
+        <label class="toggle"><input type="checkbox" id="printRetired"> Ausgemusterte aufnehmen</label>
+      </div>
+      <hr>
       <h2>Excel / Google Sheets</h2>
       <p class="muted">Eine Datei je Spieler mit den Blättern Person, Stockkörper, Stiele und Laufplatten. Die Datei kann in Excel oder Google Sheets bearbeitet und wieder importiert werden.</p>
       <div class="actions">
@@ -332,7 +369,7 @@ footer { text-align: center; color: var(--dim); font-size: .8rem; padding: 10px 
   <!-- Ohne accept: iOS graut .json-Dateien sonst in der Dateiauswahl aus. -->
   <input type="file" id="jsonFile">
 </main>
-<footer>Stocksport Materialverwaltung PRO V1.5</footer>
+<footer>Stocksport Materialverwaltung PRO V1.6</footer>
 
 <!-- Material erfassen / bearbeiten -->
 <dialog id="editor">
@@ -380,6 +417,7 @@ footer { text-align: center; color: var(--dim); font-size: .8rem; padding: 10px 
 </dialog>
 
 <div class="toast" id="toast" role="status"></div>
+<div id="printArea"></div>
 
 <script>
 'use strict';
@@ -856,7 +894,7 @@ function exportXlsx() {
   if (!needXlsx()) return;
   const p = player(), wb = XLSX.utils.book_new();
   const person = XLSX.utils.aoa_to_sheet([['Feld', 'Wert'], ['Name', p.name], ['Verein', p.club],
-    ['Stand', new Date().toLocaleString('de-DE')], ['Version', 'PRO V1.5']]);
+    ['Stand', new Date().toLocaleString('de-DE')], ['Version', 'PRO V1.6']]);
   person['!cols'] = [{ wch: 12 }, { wch: 32 }];
   XLSX.utils.book_append_sheet(wb, person, 'Person');
   for (const [kind, name] of Object.entries(SHEETS)) {
@@ -946,6 +984,50 @@ async function importJson(file) {
   } catch (e) { toast('Wiederherstellen: ' + e.message, true); }
 }
 
+// ---------- Inventurliste (Druck / PDF) ----------
+function buildInventory() {
+  const p = player();
+  document.documentElement.classList.toggle('inv-print', !!p);
+  if (!p) { $('printArea').innerHTML = ''; return; }
+  const list = p.items.filter(i => $('printRetired').checked || i.status !== RETIRED).sort(byKindInv);
+  const sum = arr => arr.reduce((n, i) => n + qtyOf(i), 0);
+  const of = kind => list.filter(i => i.kind === kind);
+  const stocks = of('stock'), stems = of('stem'), plates = of('plate');
+  const place = i => [i.location, i.notes].filter(Boolean).join(' – ');
+  const mm = v => v ? fmtNum(v) : '';
+  const table = (title, rows, cols) => `<h2>${title} <small>(${sum(rows)} Stück)</small></h2>` + (rows.length
+    ? `<table><thead><tr>${cols.map(([h, , cls]) => `<th${cls ? ` class="${cls}"` : ''}>${h}</th>`).join('')}<th class="chk">✓</th></tr></thead><tbody>` +
+      rows.map(i => `<tr>${cols.map(([, f, cls]) => `<td${cls ? ` class="${cls}"` : ''}>${esc(f(i))}</td>`).join('')}<td class="chk"></td></tr>`).join('') + '</tbody></table>'
+    : '<p>Keine Positionen.</p>');
+  const now = new Date();
+  $('printArea').innerHTML = `
+    <div class="ph">
+      <div><h1>Inventurliste Stocksport-Material</h1>
+        <div class="meta"><b>Name</b><span>${esc(p.name)}</span><b>Verein</b><span>${esc(p.club) || '–'}</span></div></div>
+      <div class="ph-date"><b>Datum</b><br>${now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+    </div>
+    <div class="summary"><b>Stockkörper:</b> ${sum(stocks)} (L ${sum(stocks.filter(i => i.size === 'L'))} · M ${sum(stocks.filter(i => i.size === 'M'))})
+      &nbsp;|&nbsp; <b>Stiele:</b> ${sum(stems)}
+      &nbsp;|&nbsp; <b>Laufplatten:</b> ${sum(plates)} (Sommer ${plates.filter(i => i.season === 'Sommer').length} · Winter ${plates.filter(i => i.season === 'Winter').length})
+      ${$('printRetired').checked ? '' : '<br><small>ohne ausgemusterte Teile</small>'}</div>
+    ${table('Stockkörper', stocks, [['Inv-Nr', i => i.inv], ['Größe', i => i.size], ['Anzahl', i => i.qty, 'num'], ['Zustand', i => i.status], ['Lagerort / Bemerkung', place]])}
+    ${table('Stiele', stems, [['Inv-Nr', i => i.inv], ['Länge (mm)', i => mm(i.length), 'num'], ['Griffform', i => i.grip], ['Zustand', i => i.status], ['Lagerort / Bemerkung', place]])}
+    ${table('Laufplatten', plates, [['Inv-Nr', i => i.inv], ['Hersteller', i => i.manufacturer], ['Bezeichnung', i => i.designation], ['Plattentyp', i => i.plateType],
+      ['Shore', i => i.shore], ['Oberfl.', i => i.surface], ['Saison', i => i.season], ['Abgedr.', i => i.special], ['Ø mm', i => mm(i.diameter), 'num'],
+      ['Zustand', i => i.status], ['Lagerort / Bemerkung', place]])}
+    <div class="sign"><div>Ort, Datum</div><div>Unterschrift</div></div>
+    <div class="foot">Erstellt mit Stocksport Materialverwaltung PRO V1.6 am ${now.toLocaleString('de-DE')}</div>`;
+}
+function printInventory() {
+  const title = document.title;
+  // Bestimmt den vorgeschlagenen PDF-Dateinamen.
+  document.title = `Inventurliste_${safeName(player().name)}_${new Date().toLocaleDateString('sv')}`;
+  addEventListener('afterprint', () => { document.title = title; }, { once: true });
+  buildInventory();
+  window.print();
+}
+addEventListener('beforeprint', buildInventory);
+
 // ---------- Ereignisse ----------
 function createPlayer(name, club) {
   name = name.trim();
@@ -981,6 +1063,7 @@ document.addEventListener('click', e => {
   if (sw) { db.current = sw.dataset.switch; view.cat = null; save(); renderAll(); toast('Spieler gewechselt'); return; }
 
   if (t.closest('[data-restore]')) { $('jsonFile').click(); return; }
+  if (t.closest('[data-print]')) { printInventory(); return; }
 
   const addModel = t.closest('[data-addmodel]');
   if (addModel) {
